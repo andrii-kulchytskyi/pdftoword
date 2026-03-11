@@ -21,17 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY server.py .
 
-# Create temp dir with correct permissions
-RUN mkdir -p /tmp/pdftoword && chmod 777 /tmp/pdftoword
-
-# Create a non-root user for security
-RUN useradd -m -u 1001 converter
-USER converter
-
-# LibreOffice needs a home directory for user profile
+# LibreOffice needs a writable home directory
 ENV HOME=/tmp/lo_home
-RUN mkdir -p /tmp/lo_home
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]
