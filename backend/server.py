@@ -13,10 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 CONVERSION_TIMEOUT_SECONDS = 120
-LIBREOFFICE_CMD = os.environ.get(
-    "LIBREOFFICE_CMD",
-    "/Applications/LibreOffice.app/Contents/MacOS/soffice",
-)
+LIBREOFFICE_CMD = os.environ.get("LIBREOFFICE_CMD", "soffice")
 
 
 @asynccontextmanager
