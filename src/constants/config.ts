@@ -1,5 +1,5 @@
 // Replace with your deployed backend URL
-export const API_URL = 'http://192.168.0.152:8000';
+export const API_URL = 'https://pdftoword-production.up.railway.app';
 
 export const MAX_FILE_SIZE_MB = 20;
 export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
