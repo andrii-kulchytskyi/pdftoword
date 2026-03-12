@@ -19,16 +19,6 @@ LIBREOFFICE_CMD = os.environ.get("LIBREOFFICE_CMD", "soffice")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Verify LibreOffice is available on startup
-    try:
-        result = subprocess.run(
-            [LIBREOFFICE_CMD, "--version"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        print(f"LibreOffice ready: {result.stdout.strip()}")
-    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
-        print(f"WARNING: LibreOffice not found or timed out: {e}")
     yield
 
 
@@ -49,23 +39,7 @@ app.add_middleware(
 @app.get("/health")
 async def health():
     """Health check endpoint."""
-    try:
-        result = subprocess.run(
-            [LIBREOFFICE_CMD, "--version"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        lo_available = result.returncode == 0
-        lo_version = result.stdout.strip() if lo_available else "unavailable"
-    except Exception:
-        lo_available = False
-        lo_version = "unavailable"
-
-    return {
-        "status": "ok" if lo_available else "degraded",
-        "libreoffice": lo_version,
-    }
+    return {"status": "ok"}
 
 
 def _cleanup(directory: str) -> None:
