@@ -1,7 +1,10 @@
 import asyncio
+import logging
 import os
 import shutil
+import socket
 import subprocess
+import sys
 import tempfile
 import uuid
 from contextlib import asynccontextmanager
@@ -11,6 +14,14 @@ from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
+# Verbose logging from the start
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    stream=sys.stdout,
+)
+logger = logging.getLogger("pdftoword")
+
 MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 CONVERSION_TIMEOUT_SECONDS = 120
 LIBREOFFICE_CMD = os.environ.get("LIBREOFFICE_CMD", "soffice")
@@ -18,8 +29,9 @@ LIBREOFFICE_CMD = os.environ.get("LIBREOFFICE_CMD", "soffice")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Verify LibreOffice is available on startup
+    logger.info("Lifespan startup begin")
     yield
+    logger.info("Lifespan shutdown")
 
 
 app = FastAPI(
@@ -39,6 +51,7 @@ app.add_middleware(
 @app.get("/health")
 async def health():
     """Health check endpoint."""
+    logger.info("Health check hit")
     return {"status": "ok"}
 
 
@@ -167,4 +180,30 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+
+    # Diagnostic: log network info
+    logger.info(f"Python version: {sys.version}")
+    logger.info(f"PORT env var: {os.environ.get('PORT', 'NOT SET')}")
+    logger.info(f"Resolved port: {port}")
+    logger.info(f"HOME env var: {os.environ.get('HOME')}")
+
+    # Test socket binding before uvicorn
+    for family, addr in [(socket.AF_INET, "0.0.0.0"), (socket.AF_INET6, "::")]:
+        try:
+            s = socket.socket(family, socket.SOCK_STREAM)
+            s.bind((addr, port))
+            s.close()
+            logger.info(f"Socket test OK: {addr}:{port} ({family.name})")
+        except Exception as e:
+            logger.warning(f"Socket test FAIL: {addr}:{port} ({family.name}): {e}")
+
+    logger.info(f"Starting uvicorn on 0.0.0.0:{port}")
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=port,
+        log_level="debug",
+        proxy_headers=True,
+        forwarded_allow_ips="*",
+        access_log=True,
+    )

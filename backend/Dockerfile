@@ -24,4 +24,4 @@ COPY server.py .
 # LibreOffice needs a writable home directory
 ENV HOME=/tmp/lo_home
 
-CMD ["sh", "-c", "echo \"Starting uvicorn on port ${PORT:-8000}\" && exec uvicorn server:app --host :: --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
+CMD ["python", "server.py"]
